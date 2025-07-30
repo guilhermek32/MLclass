@@ -98,6 +98,9 @@ if __name__ == "__main__":
     print("Antes do pré-processamento:")
     df.info()
    
+    # 3) Pré-processamento
+    print("\n - Iniciando pré-processamento dos dados")
+    
     #detect when there are more than two missing values in one line
     print("\n - Verificando colunas e removendo colunas desnecessárias")
     # Detectando linhas com mais de dois valores ausentes
@@ -105,31 +108,30 @@ if __name__ == "__main__":
     rows_to_drop = rows_with_missing[rows_with_missing > 2].index
     df = df.drop(index=rows_to_drop)
     print(f"Removidas {len(rows_to_drop)} linhas com mais de dois valores ausentes.")
+    #4) drop when there are more than two outliers, DO work!! 
+    print("Linhas com valores ausentes removidas!")
+    
    
-    # 3) Pré-processamento
-    print("\n - Iniciando pré-processamento dos dados")
     print(" - Verificando colunas e removendo colunas desnecessárias")
-    df = df.drop(columns=['Insulin'], errors='ignore')  # Removendo a coluna Insulin se existir
-    #df = df.drop(columns=['BloodPressure'], errors='ignore')  # Removendo a coluna BloodPressure se existir
-    #df = df.drop(columns=['Pregnancies'], errors='ignore')  # Removendo a coluna Pregnancies se existir
-    #df = df.drop(columns=['DiabetesPedigreeFunction'], errors='ignore')  # Removendo a coluna SkinThickness se existir
+    df = df.drop(columns=['Insulin'], errors='ignore')  # Removendo a coluna Insulin
+    #df = df.drop(columns=['BloodPressure'], errors='ignore')  # Removendo a coluna BloodPressure
+    #df = df.drop(columns=['Pregnancies'], errors='ignore')  # Removendo a coluna Pregnancies
+    #df = df.drop(columns=['DiabetesPedigreeFunction'], errors='ignore')  # Removendo a coluna SkinThickness
     
     mean_values = df.mean()
     
-    df['BMI'] = df['BMI'].fillna(df['BMI'].median())  # Preenchendo valores ausentes de BMI com a média
-    df['SkinThickness'] = df['SkinThickness'].fillna(df['SkinThickness'].median())  # Preenchendo valores ausentes de SkinThickness com a média
-    df['Glucose'] = df['Glucose'].fillna(df['Glucose'].median())  # Preenchendo valores ausentes de Glucose com a média
-    df['BloodPressure'] = df['BloodPressure'].fillna(df['BloodPressure'].median())  # Preenchendo valores ausentes de BloodPressure com a média
+    df['BMI'] = df['BMI'].fillna(df['BMI'].median())  # Preenchendo valores ausentes de BMI com a mediana
+    df['SkinThickness'] = df['SkinThickness'].fillna(df['SkinThickness'].median())  # Preenchendo valores ausentes de SkinThickness com a mediana
+    df['Glucose'] = df['Glucose'].fillna(df['Glucose'].median())  # Preenchendo valores ausentes de Glucose com a mediana
+    df['BloodPressure'] = df['BloodPressure'].fillna(df['BloodPressure'].median())  # Preenchendo valores ausentes de BloodPressure com a mediana
     
     
-    # 4) Age grouping do not work
+    # 5) Age grouping do not work
     
-    # 5) drop when there are more than two outliers, DO work!!
-    print(" - Removendo linhas com valores ausentes")
     
     
     #Normalização dos dados
-    print(" - Normalizando os dados antes de Windsorização")
+    #print(" - Normalizando os dados antes de Windsorização")
     #df = max_normalize(df, cols=df.columns)
     #scaler = MinMaxScaler()
     #df[df.columns] = scaler.fit_transform(df[df.columns])
