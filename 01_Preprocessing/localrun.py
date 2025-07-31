@@ -17,7 +17,7 @@ print(data.columns)
 print(' - Separando features (X) e target (y)')
 
 # Verifique se os nomes abaixo estão EXATAMENTE IGUAIS aos impressos acima
-feature_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'BMI', 'DiabetesPedigreeFunction', 'Age']
+feature_cols = ['Pregnancies', 'Glucose', 'BMI', 'BloodPressure', 'DiabetesPedigreeFunction', 'Age']
 
 # O erro acontece aqui se os nomes não baterem
 X = data[feature_cols] 

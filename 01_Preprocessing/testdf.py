@@ -36,7 +36,6 @@ if __name__ == "__main__":
     plt.figure(figsize=(12, 6))
     sns.boxplot(data=df)
     plt.title('Boxplot dos Dados Originais')
-    plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+
 def load_data(file_path):
     """Carrega dados de um CSV e retorna um DataFrame."""
     try:
