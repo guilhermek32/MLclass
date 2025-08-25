@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from sklearn.feature_selection import SelectKBest, f_classif
 
 def load_data(file_path):
     """Carrega dados de um CSV e retorna um DataFrame."""
@@ -38,6 +38,15 @@ if __name__ == "__main__":
     plt.title('Boxplot dos Dados Originais')
     plt.tight_layout()
     plt.show()
+
+    selector = SelectKBest(score_func=f_classif, k=3)
+
+    print("Selecionando as 3 melhores características...")
+    x_new = selector.fit_transform(df.drop('Outcome', axis=1), df['Outcome'])
+    selected_features = selector.get_support(indices=True)
+    selected_columns = df.columns[selected_features].tolist()
+    print(f"Melhores características selecionadas: {selected_columns}")
+    
 
     correlacao = df.corr()
     plt.figure(figsize=(10, 8))

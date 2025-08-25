@@ -3,42 +3,8 @@ import requests
 import re
 import pickle
 import os
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import math
 import numpy as np
-
-
-# Function to plot the angles as a 3D line connecting the points (like an antenna structure)
-def plot_antenna_structure(phi1, theta1, phi2, theta2, phi3, theta3):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Convert phi, theta into Cartesian coordinates (simple spherical to Cartesian conversion)
-    # For simplicity, assume all angles are in radians
-    r = 1  # Assume radius is 1 for simplicity (can be adjusted)
-    
-    # Convert spherical to Cartesian coordinates: (r, theta, phi)
-    x1, y1, z1 = r * np.sin(theta1) * np.cos(phi1), r * np.sin(theta1) * np.sin(phi1), r * np.cos(theta1)
-    x2, y2, z2 = r * np.sin(theta2) * np.cos(phi2), r * np.sin(theta2) * np.sin(phi2), r * np.cos(theta2)
-    x3, y3, z3 = r * np.sin(theta3) * np.cos(phi3), r * np.sin(theta3) * np.sin(phi3), r * np.cos(theta3)
-    
-    # Plot the structure (connecting points with lines)
-    ax.plot([0, x1], [0, y1], [0, z1], label="Line 1 (phi1, theta1)", color='b')
-    ax.plot([x1, x2], [y1, y2], [z1, z2], label="Line 2 (phi2, theta2)", color='g')
-    ax.plot([x2, x3], [y2, y3], [z2, z3], label="Line 3 (phi3, theta3)", color='r')
-
-    # Plot the points
-    ax.scatter([0, x1, x2, x3], [0, y1, y2, y3], [0, z1, z2, z3], color='k')
-
-    ax.set_xlabel('X Axis (Phi1)')
-    ax.set_ylabel('Y Axis (Phi2)')
-    ax.set_zlabel('Z Axis (Phi3)')
-    ax.set_title('Antenna Structure')
-    ax.legend()
-
-    plt.show()
-
-
 
 # Function to wrap values between 0 and 360 degrees
 def wrap_angle(angle):
@@ -101,8 +67,8 @@ def simulate_antenna(phi1, theta1, phi2, theta2, phi3, theta3, cache):
         print(f"Error during request: {e}")
         return None  # In case of error, return None
 
-# Hill Climbing algorithm to optimize phi and theta values
-def hill_climbing(initial_phi1, initial_theta1, initial_phi2, initial_theta2, initial_phi3, initial_theta3, cache_file, max_iterations=2000, local_optimum_threshold=500):
+# Simulated Annealing algorithm to optimize phi and theta values
+def simulated_annealing(initial_phi1, initial_theta1, initial_phi2, initial_theta2, initial_phi3, initial_theta3, cache_file, max_iterations=2000, initial_temperature=100, cooling_rate=0.99):
     # Load the cache from the file
     cache = load_cache(cache_file)
 
@@ -120,55 +86,56 @@ def hill_climbing(initial_phi1, initial_theta1, initial_phi2, initial_theta2, in
     # List to store the optimization history for plotting
     history = [(best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3, best_value)]
 
-    no_improvement_count = 0  # Counter to track if no improvement is made
-    
-    for _ in range(max_iterations):
-        # Generate neighbors by perturbing one parameter (ensure the values stay within 0 to 360)
-        neighbor_phi1 = wrap_angle(current_phi1 + random.randint(-10, 10))  # Perturb by ±4 degrees, rounded to an integer
+    temperature = initial_temperature  # Start with high temperature
+    for iteration in range(max_iterations):
+        # Perturb one of the angles slightly (randomly)
+        neighbor_phi1 = wrap_angle(current_phi1 + random.randint(-10, 10))  # Perturb by ±4 degrees
         neighbor_theta1 = wrap_angle(current_theta1 + random.randint(-10, 10))
         neighbor_phi2 = wrap_angle(current_phi2 + random.randint(-10, 10))
         neighbor_theta2 = wrap_angle(current_theta2 + random.randint(-10, 10))
         neighbor_phi3 = wrap_angle(current_phi3 + random.randint(-10, 10))
         neighbor_theta3 = wrap_angle(current_theta3 + random.randint(-10, 10))
         
-        # Evaluate the neighbors
+        # Evaluate the neighbor solution
         neighbor_value = simulate_antenna(neighbor_phi1, neighbor_theta1, neighbor_phi2, neighbor_theta2, neighbor_phi3, neighbor_theta3, cache)
         
-        # If the simulation was successful and the new value is better, update
-        if neighbor_value is not None and neighbor_value > best_value:  # Assuming we want to maximize the value
-            best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3 = neighbor_phi1, neighbor_theta1, neighbor_phi2, neighbor_theta2, neighbor_phi3, neighbor_theta3
-            best_value = neighbor_value
-            current_phi1, current_theta1, current_phi2, current_theta2, current_phi3, current_theta3 = best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3
-            no_improvement_count = 0  # Reset the counter if improvement is made
-        else:
-            no_improvement_count += 1
-        
+        if neighbor_value is not None:
+            # Calculate the change in energy (response value)
+            delta_e = neighbor_value - current_value
+
+            # If the new solution is better or if a random chance occurs (based on temperature), accept the new solution
+            if delta_e > 0 or random.random() < math.exp(delta_e / temperature):
+                current_phi1, current_theta1, current_phi2, current_theta2, current_phi3, current_theta3 = neighbor_phi1, neighbor_theta1, neighbor_phi2, neighbor_theta2, neighbor_phi3, neighbor_theta3
+                current_value = neighbor_value
+
+                # If the new solution is the best one, update best
+                if current_value > best_value:
+                    best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3 = current_phi1, current_theta1, current_phi2, current_theta2, current_phi3, current_theta3
+                    best_value = current_value
+
         # Store the current best values in the history list
         history.append((best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3, best_value))
 
-        # Check for local optimum: If the best value has not changed for local_optimum_threshold iterations, stop
-        if no_improvement_count >= local_optimum_threshold:
-            print(f"Local optimum detected after {no_improvement_count} iterations without improvement.")
-            break
+        # Cool down the temperature
+        temperature *= cooling_rate
 
     # Save the cache to the file
     save_cache(cache, cache_file)
     
     return (best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3, best_value), history
 
-
 # Initial guess (values can be chosen randomly or based on some heuristic)
-initial_phi1, initial_theta1 = 10, 180
-initial_phi2, initial_theta2 = 1, 182
-initial_phi3, initial_theta3 = 182, 156
+initial_phi1, initial_theta1 = 0, 0
+initial_phi2, initial_theta2 = 0, 0
+initial_phi3, initial_theta3 = 0, 0
 
 # Cache file path
 cache_file = "antenna_cache.pkl"
 
-# Perform hill climbing to find the optimal solution and store the optimization history
-result, history = hill_climbing(initial_phi1, initial_theta1, initial_phi2, initial_theta2, initial_phi3, initial_theta3, cache_file)
+# Perform simulated annealing to find the optimal solution and store the optimization history
+result, history = simulated_annealing(initial_phi1, initial_theta1, initial_phi2, initial_theta2, initial_phi3, initial_theta3, cache_file)
 
-print("Hill Climbing Optimization Result:")
+print("Simulated Annealing Optimization Result:")
 print(f"Initial values: phi1={initial_phi1}, theta1={initial_theta1}, phi2={initial_phi2}, theta2={initial_theta2}, phi3={initial_phi3}, theta3={initial_theta3}")
 print(f"Result: {result}")
 
@@ -178,8 +145,3 @@ if result:
     print(f"Best simulated antenna response: {best_value}")
 else:
     print("Optimization failed due to invalid simulations.")
-
-best_phi1, best_theta1 = np.radians(30), np.radians(45)  # Convert degrees to radians
-best_phi2, best_theta2 = np.radians(60), np.radians(90)
-best_phi3, best_theta3 = np.radians(120), np.radians(180)
-#plot_antenna_structure(best_phi1, best_theta1, best_phi2, best_theta2, best_phi3, best_theta3)
